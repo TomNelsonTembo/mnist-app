@@ -21,6 +21,12 @@ Before you begin, ensure you have the following installed:
 1. **Clone the Repository**
 
    ```bash
-   git clone https://github.com/your-username/mnist-classification-frontend.git
+   git clone git@github.com:TomNelsonTembo/mnist-app.git
    cd mnist-classification-frontend
    ```
+## Install Dependencies
+```bash
+npm install
+# or
+yarn install
+```
