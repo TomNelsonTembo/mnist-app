@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { predict } from "./api";
 
 export default function DigitRecognizer() {
@@ -11,7 +11,9 @@ export default function DigitRecognizer() {
   const [isDrawing, setIsDrawing] = useState(false);
   const lastPos = useRef({ x: 0, y: 0 });
 
+  // Handle touch events for mobile
   const startDrawing = (event) => {
+    event.preventDefault(); // Prevent default touch behavior (e.g., scrolling)
     setIsDrawing(true);
     const coords = getCoordinates(event, canvasRef.current);
     lastPos.current = coords;
@@ -22,7 +24,7 @@ export default function DigitRecognizer() {
 
   const draw = (event) => {
     if (!isDrawing) return;
-    event.preventDefault();
+    event.preventDefault(); // Prevent default touch behavior
 
     const ctx = canvasRef.current.getContext("2d");
     ctx.lineWidth = 20;
@@ -40,6 +42,7 @@ export default function DigitRecognizer() {
 
   const stopDrawing = () => setIsDrawing(false);
 
+  // Get coordinates for both mouse and touch events
   const getCoordinates = (event, canvas) => {
     const rect = canvas.getBoundingClientRect();
     return {
@@ -48,6 +51,44 @@ export default function DigitRecognizer() {
     };
   };
 
+  // Resize canvas for mobile responsiveness
+  useEffect(() => {
+    const preventScroll = (event) => {
+      event.preventDefault();
+    };
+
+    // Disable scrolling when interacting with the canvas
+    const disableScroll = () => {
+      document.body.style.overflow = "hidden";
+      document.addEventListener("touchmove", preventScroll, { passive: false });
+    };
+
+    // Re-enable scrolling
+    const enableScroll = () => {
+      document.body.style.overflow = "";
+      document.removeEventListener("touchmove", preventScroll);
+    };
+
+    // Attach event listeners to the canvas
+    const canvas = canvasRef.current;
+    if (canvas) {
+      canvas.addEventListener("touchstart", disableScroll);
+      canvas.addEventListener("touchend", enableScroll);
+      canvas.addEventListener("touchcancel", enableScroll);
+    }
+
+    // Cleanup on unmount
+    return () => {
+      if (canvas) {
+        canvas.removeEventListener("touchstart", disableScroll);
+        canvas.removeEventListener("touchend", enableScroll);
+        canvas.removeEventListener("touchcancel", enableScroll);
+      }
+      enableScroll(); // Ensure scrolling is re-enabled when component unmounts
+    };
+  }, []);
+
+  // Get canvas data for prediction
   const getCanvasData = () => {
     const canvas = canvasRef.current;
     const tempCanvas = document.createElement("canvas");
@@ -87,32 +128,39 @@ export default function DigitRecognizer() {
     return pixels;
   };
 
+  // Softmax function to convert logits to probabilities
+  function softmax(logits) {
+    const maxLogit = Math.max(...logits); // Subtracting max value for numerical stability
+    const exps = logits.map((logit) => Math.exp(logit - maxLogit)); // Exponentiate each logit
+    const sumExps = exps.reduce((a, b) => a + b, 0); // Sum of exponentiated logits
+    return exps.map((exp) => exp / sumExps); // Normalize to get probabilities
+  }
   const handlePredict = async () => {
     const pixels = getCanvasData();
     if (!pixels) {
       setMessage("Please draw a digit");
       return;
     }
-  
+
     // Start measuring latency
     const startTime = performance.now();
-  
+
     const result = await predict(pixels, modelVersion); // Pass the selected model version to the API
-  
+
     // End measuring latency
     const endTime = performance.now();
     const latency = endTime - startTime; // Latency in milliseconds
-  
+
     if (result) {
-      const predictions = result.predictions[0];
+      const predictions = softmax(result.predictions[0]); // Apply softmax to result.predictions[0];
       const maxConfidence = Math.max(...predictions);
       const predictedDigit = predictions.indexOf(maxConfidence);
-  
+      const confidence = predictions[predictedDigit];
       if (maxConfidence < 0.5) {
         setMessage("Not confident enough. Please draw more clearly.");
       } else {
         setPrediction(predictedDigit);
-        setConfidence(maxConfidence);
+        setConfidence(confidence);
         setLatency(latency);
       }
     } else {
@@ -150,79 +198,6 @@ export default function DigitRecognizer() {
       >
         🧠 MNIST Digit Recognizer
       </h1>
-
-      <p
-        style={{
-          maxWidth: "800px",
-          marginBottom: "0.5rem",
-          fontSize: "1rem",
-          lineHeight: "1.5",
-        }}
-      >
-        {" "}
-        Welcome to the MNIST Digit Recognizer, a machine learning project
-        developed by Tom Nelson Tembo for my bachelor thesis at the Czech
-        University of Life Sciences in Prague. This app explores deep learning
-        optimization for digit classification. It features three models:
-      </p>
-      <p
-        style={{
-          maxWidth: "800px",
-          marginBottom: "0.5rem",
-          marginTop: "0.5rem",
-          fontSize: "1rem",
-          lineHeight: "1.5",
-        }}
-      >
-        <br /> - <strong>Base Model</strong>: A
-        standard neural network trained on MNIST. <br /> -{" "}
-        <strong>Pruned Model</strong>: A size-optimized version of the base
-        model. <br /> - <strong>Quantized Model</strong>: A precision-reduced
-        model for edge device efficiency.{" "}
-      </p>
-      <p
-        style={{
-          maxWidth: "800px",
-          marginBottom: "0.5rem",
-          fontSize: "1rem",
-          lineHeight: "1.5",
-        }}
-      >
-        {" "}
-        The backend uses TensorFlow Serving for fast, scalable inference. Users
-        can draw a digit, and the app classifies it in real-time, showcasing
-        trade-offs between model size, accuracy, and performance.{" "}
-      </p>
-      <p
-        style={{
-          maxWidth: "800px",
-          marginBottom: "0.5rem",
-          fontSize: "1rem",
-          lineHeight: "1.5",
-        }}
-      >
-        {" "}
-        Connect with me on{" "}
-        <a
-          href="https://www.linkedin.com/in/tom-nelson-tembo-440ba0235/"
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{ color: "#0077b5", textDecoration: "underline" }}
-        >
-          LinkedIn
-        </a>{" "}
-        or check out my projects on{" "}
-        <a
-          href="https://github.com/TomNelsonTembo"
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{ color: "#0077b5", textDecoration: "underline" }}
-        >
-          GitHub
-        </a>
-        .{" "}
-      </p>
-
       {/* Model version selection */}
       <div style={{ marginBottom: "1rem" }}>
         <label style={{ color: "white", fontSize: "1rem", fontWeight: "bold" }}>
@@ -252,7 +227,7 @@ export default function DigitRecognizer() {
         height={280}
         style={{
           border: "4px solid white",
-          backgroundColor: "white",
+          backgroundColor: "#f9f9f9", // Set canvas background to light color (white or something else)
           cursor: "crosshair",
           borderRadius: "0.5rem",
           boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
@@ -265,7 +240,7 @@ export default function DigitRecognizer() {
         onTouchMove={draw}
         onTouchEnd={stopDrawing}
         onTouchCancel={stopDrawing}
-      ></canvas>
+      />
 
       <div style={{ marginTop: "1rem", display: "flex", gap: "1rem" }}>
         <button
@@ -316,13 +291,106 @@ export default function DigitRecognizer() {
             Predicted Digit: {prediction}
           </p>
           <p style={{ fontSize: "1rem" }}>
-            Confidence: {(confidence * 100).toFixed(1)}%
+            Confidence: {(Math.abs(confidence) * 100).toFixed(1)}%
           </p>
-          <p style={{ fontSize: "1rem" }}>
-            Latency: {(latency).toFixed(2)} ms
-          </p>
+          <p style={{ fontSize: "1rem" }}>Latency: {latency.toFixed(2)} ms</p>
         </div>
       )}
+      <p
+        style={{
+          maxWidth: "800px",
+          marginBottom: "0.5rem",
+          fontSize: "1rem",
+          lineHeight: "1.5",
+        }}
+      >
+        Welcome to the MNIST Digit Recognizer, a machine learning project
+        developed by Tom Nelson Tembo for my bachelor thesis at the Czech
+        University of Life Sciences in Prague. This app explores deep learning
+        optimization for digit classification. It features three models:
+      </p>
+      <p
+        style={{
+          maxWidth: "800px",
+          marginBottom: "0.5rem",
+          marginTop: "0.5rem",
+          fontSize: "1rem",
+          lineHeight: "1.5",
+        }}
+      >
+        <br /> - <strong>Base Model</strong>: A standard neural network trained
+        on MNIST.
+        <br /> - <strong>Pruned Model</strong>: A size-optimized version of the
+        base model.
+        <br /> - <strong>Quantized Model</strong>: A precision-reduced model for
+        edge device efficiency.
+      </p>
+      <p
+        style={{
+          maxWidth: "800px",
+          marginBottom: "0.5rem",
+          fontSize: "1rem",
+          lineHeight: "1.5",
+        }}
+      >
+        The core of this project is a{" "}
+        <strong>Convolutional Neural Network (CNN)</strong>, a deep learning
+        architecture designed for image recognition. The CNN processes
+        handwritten digits by analyzing pixel values in grayscale images (28x28
+        pixels).
+        <br />
+        <br />
+        The model first applies <strong>convolutional layers</strong> to detect
+        patterns such as edges and curves. These features are then passed
+        through <strong>pooling layers</strong> to reduce dimensionality, making
+        computations more efficient while preserving key information. Finally,
+        fully connected layers classify the extracted features into one of ten
+        digit categories (0-9).
+        <br />
+        <br />
+        This CNN-based approach enhances accuracy compared to traditional dense
+        neural networks by leveraging spatial hierarchies in images.
+      </p>
+      <p
+        style={{
+          maxWidth: "800px",
+          marginBottom: "0.5rem",
+          fontSize: "1rem",
+          lineHeight: "1.5",
+        }}
+      >
+        The backend uses TensorFlow Serving for fast, scalable inference. Users
+        can draw a digit, and the app classifies it in real-time, showcasing
+        trade-offs between model size, accuracy, and performance.
+      </p>
+      <p
+        style={{
+          maxWidth: "800px",
+          marginBottom: "0.5rem",
+          fontSize: "1rem",
+          lineHeight: "1.5",
+        }}
+      >
+        Connect with me on{" "}
+        <a
+          href="https://www.linkedin.com/in/tom-nelson-tembo-440ba0235/"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ color: "#0077b5", textDecoration: "underline" }}
+        >
+          LinkedIn
+        </a>{" "}
+        or check out my projects on{" "}
+        <a
+          href="https://github.com/TomNelsonTembo"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ color: "#0077b5", textDecoration: "underline" }}
+        >
+          GitHub
+        </a>
+        .
+      </p>
     </div>
   );
 }
