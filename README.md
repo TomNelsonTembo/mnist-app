@@ -24,9 +24,38 @@ Before you begin, ensure you have the following installed:
    git clone git@github.com:TomNelsonTembo/mnist-app.git
    cd mnist-classification-frontend
    ```
-## Install Dependencies
-```bash
-npm install
-# or
-yarn install
-```
+2.**Install Dependencies**
+   ```bash
+   npm install
+   # or
+   yarn install
+   ```
+3. **Run the Development Server**
+   ```bash
+   npm run dev
+   # or
+   yarn dev
+   ```
+4. **Build for Production**
+   To build the project for production, run:
+   ```bash
+   npm run build
+   # or
+   yarn build
+   ```
+## Project Structure
+   ```
+   mnist-frontend/
+   ├── public/              # Static assets
+   ├── src/                 # Source code
+   │   ├── assets/      # React components
+   │   ├── hooks/           # Custom React hooks
+   │   ├── App.css/           # Stylesheet
+   │   ├── App.jsx          # Main application component
+   │   └── main.jsx         # Entry point
+   ├── .env                 # Environment variables
+   ├── vite.config.js       # Vite configuration
+   ├── Dockerfile           # Dockerfile
+   ├── package.json         # Project dependencies
+   └── README.md            # This file
+   ```
