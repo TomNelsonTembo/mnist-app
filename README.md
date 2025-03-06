@@ -1,8 +1,26 @@
-# React + Vite
+# MNIST Classification Frontend with Vite + React
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This project is a frontend application built with **Vite** and **React** that serves as a user interface for interacting with MNIST classification models. It allows users to draw digits, submit them for classification, and view the model's predictions.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Interactive Canvas**: Draw digits using a mouse or touch input.
+- **Model Integration**: Connect to a backend service running MNIST classification models.
+- **Real-Time Predictions**: Submit drawn digits and receive classification results instantly.
+- **Responsive Design**: Works seamlessly on both desktop and mobile devices.
+
+## Prerequisites
+
+Before you begin, ensure you have the following installed:
+
+- [Node.js](https://nodejs.org/) (v16 or higher)
+- [npm](https://www.npmjs.com/) or [Yarn](https://yarnpkg.com/)
+
+## Getting Started
+
+1. **Clone the Repository**
+
+   ```bash
+   git clone https://github.com/your-username/mnist-classification-frontend.git
+   cd mnist-classification-frontend
+   ```
