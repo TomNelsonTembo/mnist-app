@@ -10,9 +10,7 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  /* Default background for dark theme */
-  /* --background-color-dark: linear-gradient(to bottom right, #3917b1, #8983df, #292121);
-  --background-color-light: linear-gradient(to bottom right, #f3f4f6, #d1e6fc, #e3e8f7); */
+
   --primary-color: rgba(255, 255, 255, 0.87);
   --secondary-color-dark: #489db3;
   --secondary-color-light: #333333;
